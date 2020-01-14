@@ -8,8 +8,7 @@ locals {
 resource "aws_s3_bucket" "s3logging_bucket" {
   bucket = "${local.account_id}-${var.region}-s3logging-${var.bucket_suffix}"
   acl    = "log-delivery-write"
-
-  tags = merge(local.common_tags, var.extra_tags)
+  tags   = var.tags
 
   versioning {
     enabled = true
@@ -40,4 +39,3 @@ resource "aws_s3_bucket_public_access_block" "block_public_access" {
   ignore_public_acls      = true
   restrict_public_buckets = true
 }
-
