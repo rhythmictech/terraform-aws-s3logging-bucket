@@ -1,4 +1,4 @@
-# terraform-aws-route53-endpoint
+# terraform-aws-s3logging-bucket
 [![](https://github.com/rhythmictech/terraform-aws-s3logging-bucket/workflows/check/badge.svg)](https://github.com/rhythmictech/terraform-aws-s3logging-bucket/actions)
 
 Create and manage a bucket suitable for access logging for other S3 buckets.
