@@ -27,6 +27,7 @@ module "s3logging-bucket" {
 | Name | Description |
 |------|-------------|
 | s3logging\_bucket\_arn | The ARN of the bucket |
+| s3logging\_bucket\_domain\_name | The domain name of the bucket |
 | s3logging\_bucket\_name | The name of the bucket |
 
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
