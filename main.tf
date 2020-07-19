@@ -1,25 +1,38 @@
 data "aws_caller_identity" "current" {
 }
 
-locals {
-  account_id = data.aws_caller_identity.current.account_id
+data "aws_region" "current" {
 }
 
-resource "aws_s3_bucket" "s3logging_bucket" {
-  bucket = "${local.account_id}-${var.region}-s3logging-${var.bucket_suffix}"
+locals {
+  account_id  = data.aws_caller_identity.current.account_id
+  bucket_name = var.bucket_name == null ? "${local.account_id}-${local.region}-s3logging-${var.bucket_suffix}" : var.bucket_name
+  region      = data.aws_region.current.name
+}
+
+# Ignore logging requirement - access logging for a logging bucket is a little meta
+#tfsec:ignore:AWS002
+resource "aws_s3_bucket" "this" {
+  bucket = local.bucket_name
   acl    = "log-delivery-write"
   tags   = var.tags
 
-  versioning {
-    enabled = true
-  }
+  dynamic "lifecycle_rule" {
+    iterator = rule
+    for_each = var.lifecycle_rules
 
-  lifecycle_rule {
-    id      = "expire"
-    enabled = true
+    content {
+      id      = rule.value.id
+      enabled = rule.value.enabled
+      prefix  = lookup(rule.value, "prefix", null)
 
-    noncurrent_version_expiration {
-      days = 90
+      expiration {
+        days = lookup(rule.value, "expiration", 2147483647)
+      }
+
+      noncurrent_version_expiration {
+        days = lookup(rule.value, "noncurrent_version_expiration", 365)
+      }
     }
   }
 
@@ -30,10 +43,15 @@ resource "aws_s3_bucket" "s3logging_bucket" {
       }
     }
   }
+
+  versioning {
+    enabled    = var.versioning_enabled
+    mfa_delete = var.mfa_delete_enabled
+  }
 }
 
-resource "aws_s3_bucket_public_access_block" "block_public_access" {
-  bucket                  = aws_s3_bucket.s3logging_bucket.id
+resource "aws_s3_bucket_public_access_block" "this" {
+  bucket                  = aws_s3_bucket.this.id
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
