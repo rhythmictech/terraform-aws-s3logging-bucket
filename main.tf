@@ -6,7 +6,12 @@ data "aws_region" "current" {
 
 locals {
   account_id  = data.aws_caller_identity.current.account_id
-  bucket_name = var.bucket_name == null ? "${local.account_id}-${local.region}-s3logging-${var.bucket_suffix}" : var.bucket_name
+
+  bucket_name = coalesce(
+    var.bucket_name,
+    "${local.account_id}-${local.region}-s3logging-${var.bucket_suffix}"
+  )
+
   region      = data.aws_region.current.name
 }
 
