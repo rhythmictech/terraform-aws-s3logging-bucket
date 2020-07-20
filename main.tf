@@ -5,14 +5,13 @@ data "aws_region" "current" {
 }
 
 locals {
-  account_id  = data.aws_caller_identity.current.account_id
-
+  account_id = data.aws_caller_identity.current.account_id
   bucket_name = coalesce(
     var.bucket_name,
     "${local.account_id}-${local.region}-s3logging-${var.bucket_suffix}"
   )
 
-  region      = data.aws_region.current.name
+  region = data.aws_region.current.name
 }
 
 # Ignore logging requirement - access logging for a logging bucket is a little meta
@@ -36,7 +35,7 @@ resource "aws_s3_bucket" "this" {
       }
 
       noncurrent_version_expiration {
-        days = lookup(rule.value, "noncurrent_version_expiration", 365)
+        days = lookup(rule.value, "noncurrent_version_expiration", 2147483647)
       }
     }
   }
@@ -50,8 +49,11 @@ resource "aws_s3_bucket" "this" {
   }
 
   versioning {
-    enabled    = var.versioning_enabled
-    mfa_delete = var.mfa_delete_enabled
+    enabled = var.versioning_enabled
+  }
+
+  lifecycle {
+    ignore_changes = [versioning[0].mfa_delete]
   }
 }
 

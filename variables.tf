@@ -11,16 +11,8 @@ variable "bucket_suffix" {
 }
 
 variable "lifecycle_rules" {
-  default = [{
-    id                            = "expire"
-    enabled                       = true
-    prefix                        = null
-    expiration                    = 2147483647
-    noncurrent_version_expiration = 365
-  }]
-
+  default     = []
   description = "lifecycle rules to apply to the bucket"
-
   type = list(object(
     {
       id                            = string
@@ -29,19 +21,6 @@ variable "lifecycle_rules" {
       expiration                    = number
       noncurrent_version_expiration = number
   }))
-}
-
-variable "mfa_delete_enabled" {
-  default     = null
-  description = "enable MFA delete on the bucket (note that this cannot be enabled programatically and requires the root account)"
-  type        = bool
-}
-
-# tflint-ignore: terraform_unused_declarations
-variable "region" {
-  default     = null
-  description = "(deprecated) this variable is no longer used and will be removed in a future release"
-  type        = string
 }
 
 variable "tags" {
