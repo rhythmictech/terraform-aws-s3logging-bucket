@@ -50,6 +50,15 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
       noncurrent_version_expiration {
         noncurrent_days = lookup(rule.value, "noncurrent_version_expiration", 2147483647)
       }
+
+      dynamic "transition" {
+        for_each = coalesce(rule.value.transition, [])
+
+        content {
+          days          = transition.value.days
+          storage_class = transition.value.storage_class
+        }
+      }
     }
   }
 

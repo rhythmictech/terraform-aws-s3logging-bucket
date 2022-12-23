@@ -17,15 +17,37 @@ variable "kms_key_id" {
 }
 
 variable "lifecycle_rules" {
-  default     = []
   description = "lifecycle rules to apply to the bucket"
+
+  default = [
+    {
+      id                            = "expire-noncurrent-objects-after-ninety-days"
+      noncurrent_version_expiration = 90
+    },
+    {
+      id = "transition-to-IA-after-30-days"
+      transition = [{
+        days          = 30
+        storage_class = "STANDARD_IA"
+      }]
+    },
+    {
+      id         = "delete-after-seven-years"
+      expiration = 2557
+    },
+  ]
+
   type = list(object(
     {
       id                            = string
-      enabled                       = bool
-      prefix                        = string
-      expiration                    = number
-      noncurrent_version_expiration = number
+      enabled                       = optional(bool, true)
+      expiration                    = optional(number)
+      prefix                        = optional(number)
+      noncurrent_version_expiration = optional(number)
+      transition = optional(list(object({
+        days          = number
+        storage_class = string
+      })))
   }))
 }
 
