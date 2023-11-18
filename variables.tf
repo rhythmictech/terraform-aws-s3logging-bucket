@@ -51,6 +51,11 @@ variable "lifecycle_rules" {
   }))
 }
 
+variable "object_ownership" {
+  default     = "BucketOwnerPreferred"
+  description = "Specifies S3 object ownership control. Defaults to BucketOwnerPreferred for backwards-compatibility. Recommended value is BucketOwnerEnforced."
+}
+
 variable "tags" {
   default     = {}
   description = "Tags to add to supported resources"

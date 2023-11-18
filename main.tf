@@ -22,6 +22,8 @@ resource "aws_s3_bucket" "this" {
 }
 
 resource "aws_s3_bucket_acl" "this" {
+  count = var.object_ownership == "BucketOwnerEnforced" ? 0 : 1
+
   bucket = aws_s3_bucket.this.id
   acl    = "log-delivery-write"
 }
@@ -71,6 +73,14 @@ resource "aws_s3_bucket_public_access_block" "this" {
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_ownership_controls" "this" {
+  bucket = aws_s3_bucket.this.id
+
+  rule {
+    object_ownership = var.object_ownership
+  }
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
