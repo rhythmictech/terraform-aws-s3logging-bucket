@@ -18,7 +18,6 @@ locals {
 #tfsec:ignore:AWS002
 resource "aws_s3_bucket" "this" {
   bucket = local.bucket_name
-  acl    = "log-delivery-write"
   tags   = var.tags
 
   dynamic "lifecycle_rule" {
