@@ -52,7 +52,7 @@ variable "lifecycle_rules" {
 }
 
 variable "object_ownership" {
-  default     = "BucketOwnerPreferred"
+  default     = "BucketOwnerEnforced"
   description = "Specifies S3 object ownership control. Defaults to BucketOwnerPreferred for backwards-compatibility. Recommended value is BucketOwnerEnforced."
 }
 

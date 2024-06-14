@@ -103,3 +103,33 @@ resource "aws_s3_bucket_versioning" "this" {
     status = "Enabled"
   }
 }
+
+resource "aws_s3_bucket_policy" "this" {
+  count = var.object_ownership == "BucketOwnerEnforced" ? 1 : 0
+
+  bucket = aws_s3_bucket.this.id
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "S3ServerAccessLogsPolicy",
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "logging.s3.amazonaws.com"
+            },
+            "Action": [
+                "s3:PutObject"
+            ],
+            "Resource": "arn:aws:s3:::${aws_s3_bucket.this.bucket}/*",
+            "Condition": {
+                "StringEquals": {
+                    "aws:SourceAccount": "${local.account_id}"
+                }
+            }
+        }
+    ]
+}
+EOF
+}
