@@ -47,7 +47,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
       }
 
       dynamic "expiration" {
-        for_each = can(rule.value.expiration) ? [1] : [0]
+        for_each = rule.value.expiration != null ? [1] : [0]
 
         content {
           days = rule.value.expiration
@@ -55,7 +55,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
       }
 
       dynamic "noncurrent_version_expiration" {
-        for_each = can(rule.value.noncurrent_version_expiration) ? [1] : []
+        for_each = rule.value.noncurrent_version_expiration != null ? [1] : []
 
         content {
           noncurrent_days = rule.value.noncurrent_version_expiration
