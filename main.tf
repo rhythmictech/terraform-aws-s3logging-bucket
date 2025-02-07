@@ -31,7 +31,8 @@ resource "aws_s3_bucket_acl" "this" {
 resource "aws_s3_bucket_lifecycle_configuration" "this" {
   count = var.lifecycle_rules == null ? 0 : 1
 
-  bucket = aws_s3_bucket.this.id
+  bucket                                 = aws_s3_bucket.this.id
+  transition_default_minimum_object_size = var.lifecycle_transition_default_minimum_object_size
 
   dynamic "rule" {
     iterator = rule
@@ -41,8 +42,12 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
       id     = rule.value.id
       status = rule.value.enabled ? "Enabled" : "Disabled"
 
-      filter {
-        prefix = lookup(rule.value, "prefix", null)
+      dynamic "filter" {
+        for_each = can(rule.value.prefix) ? [1] : []
+
+        content {
+          prefix = lookup(rule.value, "prefix", null)
+        }
       }
 
       expiration {
@@ -50,7 +55,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
       }
 
       dynamic "noncurrent_version_expiration" {
-        for_each = lookup(rule.value, "noncurrent_version_expiration", null) != null ? [1] : []
+        for_each = can(rule.value.noncurrent_version_expiration) ? [1] : []
 
         content {
           noncurrent_days = lookup(rule.value, "noncurrent_version_expiration", null)
