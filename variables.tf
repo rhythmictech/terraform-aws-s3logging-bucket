@@ -42,7 +42,7 @@ variable "lifecycle_rules" {
       id                            = string
       enabled                       = optional(bool, true)
       expiration                    = optional(number)
-      prefix                        = optional(number)
+      prefix                        = optional(string)
       noncurrent_version_expiration = optional(number)
       transition = optional(list(object({
         days          = number
