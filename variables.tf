@@ -60,6 +60,7 @@ variable "lifecycle_transition_default_minimum_object_size" {
 variable "object_ownership" {
   default     = "BucketOwnerEnforced"
   description = "Specifies S3 object ownership control. Defaults to BucketOwnerPreferred for backwards-compatibility. Recommended value is BucketOwnerEnforced."
+  type        = string
 }
 
 variable "tags" {
