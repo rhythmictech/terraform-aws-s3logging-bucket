@@ -42,7 +42,7 @@ variable "lifecycle_rules" {
       id                            = string
       enabled                       = optional(bool, true)
       expiration                    = optional(number)
-      prefix                        = optional(number)
+      prefix                        = optional(string)
       noncurrent_version_expiration = optional(number)
       transition = optional(list(object({
         days          = number
@@ -51,9 +51,16 @@ variable "lifecycle_rules" {
   }))
 }
 
+variable "lifecycle_transition_default_minimum_object_size" {
+  default     = "varies_by_storage_class"
+  description = "The default minimum object size behavior applied to the lifecycle configuration"
+  type        = string
+}
+
 variable "object_ownership" {
   default     = "BucketOwnerEnforced"
   description = "Specifies S3 object ownership control. Defaults to BucketOwnerPreferred for backwards-compatibility. Recommended value is BucketOwnerEnforced."
+  type        = string
 }
 
 variable "tags" {
