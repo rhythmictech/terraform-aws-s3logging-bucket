@@ -42,7 +42,32 @@ module "cloudtrail-logging" {
 ```
 
 
-<!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+## Migrating an existing bucket to BucketOwnerEnforced
+
+Buckets created by module versions before 4.x (or with `object_ownership` set
+to `BucketOwnerPreferred`/`ObjectWriter`) have the `log-delivery-write` ACL
+applied. AWS will not accept the `BucketOwnerEnforced` setting while that ACL
+is in place — applying it fails with `InvalidBucketAclWithObjectOwnership`.
+
+To migrate, set `reset_bucket_acl = true` for one apply:
+
+```hcl
+module "s3logging-bucket" {
+  source = "rhythmictech/s3logging-bucket/aws"
+
+  object_ownership = "BucketOwnerEnforced" # the default
+  reset_bucket_acl = true
+}
+```
+
+This resets the bucket ACL to `private` (after the bucket policy takes over
+the log delivery grant) before ownership controls disable ACLs, following the
+[AWS-documented sequence](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-ownership-migrating-acls-prerequisites.html).
+Once the apply succeeds, `reset_bucket_acl` can be set back to `false` (or
+left as-is; it has no further effect). Do not enable it for buckets that are
+already `BucketOwnerEnforced` — AWS rejects all ACL requests on such buckets.
+
+<!-- BEGIN_TF_DOCS -->
 ## Requirements
 
 | Name | Version |
@@ -65,6 +90,7 @@ No modules.
 | Name | Type |
 |------|------|
 | [aws_s3_bucket.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
+| [aws_s3_bucket_acl.reset](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_acl) | resource |
 | [aws_s3_bucket_acl.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_acl) | resource |
 | [aws_s3_bucket_lifecycle_configuration.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_lifecycle_configuration) | resource |
 | [aws_s3_bucket_ownership_controls.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_ownership_controls) | resource |
@@ -85,6 +111,7 @@ No modules.
 | <a name="input_lifecycle_rules"></a> [lifecycle\_rules](#input\_lifecycle\_rules) | lifecycle rules to apply to the bucket | <pre>list(object(<br/>    {<br/>      id                            = string<br/>      enabled                       = optional(bool, true)<br/>      expiration                    = optional(number)<br/>      prefix                        = optional(string)<br/>      noncurrent_version_expiration = optional(number)<br/>      transition = optional(list(object({<br/>        days          = number<br/>        storage_class = string<br/>      })))<br/>  }))</pre> | <pre>[<br/>  {<br/>    "id": "expire-noncurrent-objects-after-ninety-days",<br/>    "noncurrent_version_expiration": 90<br/>  },<br/>  {<br/>    "id": "transition-to-IA-after-30-days",<br/>    "transition": [<br/>      {<br/>        "days": 30,<br/>        "storage_class": "STANDARD_IA"<br/>      }<br/>    ]<br/>  },<br/>  {<br/>    "expiration": 2557,<br/>    "id": "delete-after-seven-years"<br/>  }<br/>]</pre> | no |
 | <a name="input_lifecycle_transition_default_minimum_object_size"></a> [lifecycle\_transition\_default\_minimum\_object\_size](#input\_lifecycle\_transition\_default\_minimum\_object\_size) | The default minimum object size behavior applied to the lifecycle configuration | `string` | `"varies_by_storage_class"` | no |
 | <a name="input_object_ownership"></a> [object\_ownership](#input\_object\_ownership) | Specifies S3 object ownership control. With the default (and recommended) value of `BucketOwnerEnforced`, ACLs are disabled and log delivery is granted via bucket policy instead of the `log-delivery-write` ACL. | `string` | `"BucketOwnerEnforced"` | no |
+| <a name="input_reset_bucket_acl"></a> [reset\_bucket\_acl](#input\_reset\_bucket\_acl) | Set to true when migrating an existing bucket that has ACLs applied (e.g. `log-delivery-write` from an earlier module version) to `object_ownership = "BucketOwnerEnforced"`. Resets the bucket ACL to `private` before ownership controls disable ACLs, as AWS requires. Leave false for new buckets — ACL requests fail on buckets that are already BucketOwnerEnforced. | `bool` | `false` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags to add to supported resources | `map(string)` | `{}` | no |
 | <a name="input_versioning_enabled"></a> [versioning\_enabled](#input\_versioning\_enabled) | Whether or not to use versioning on the bucket. This can be useful for audit purposes since objects in a logging bucket should not be updated. | `bool` | `true` | no |
 
@@ -95,7 +122,7 @@ No modules.
 | <a name="output_s3_bucket_arn"></a> [s3\_bucket\_arn](#output\_s3\_bucket\_arn) | The ARN of the bucket |
 | <a name="output_s3_bucket_domain_name"></a> [s3\_bucket\_domain\_name](#output\_s3\_bucket\_domain\_name) | The domain name of the bucket |
 | <a name="output_s3_bucket_name"></a> [s3\_bucket\_name](#output\_s3\_bucket\_name) | The name of the bucket |
-<!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+<!-- END_TF_DOCS -->
 
 ## History
 Between versions 1.x and 2.x, there were breaking changes. In particular, resource names were changed to follow a `this` convention. The following commands (with some customization for naming) will automatically migrate existing states:
