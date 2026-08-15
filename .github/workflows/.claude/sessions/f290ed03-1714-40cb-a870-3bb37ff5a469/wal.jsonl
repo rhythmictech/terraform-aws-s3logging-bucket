@@ -1,2 +1,0 @@
-{"t": 1786826491, "op": "cwd", "summary": "/Users/cris/dev/tf/terraform-aws-s3logging-bucket/.github/workflows"}
-{"t": 1786826498, "op": "failure", "summary": "bash: ", "duration_ms": 54, "effort": "high", "prompt_id": "b432078a-40ae-48e6-8061-18a4d58cc8cc"}
