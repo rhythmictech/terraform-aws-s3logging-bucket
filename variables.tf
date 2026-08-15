@@ -59,8 +59,13 @@ variable "lifecycle_transition_default_minimum_object_size" {
 
 variable "object_ownership" {
   default     = "BucketOwnerEnforced"
-  description = "Specifies S3 object ownership control. Defaults to BucketOwnerPreferred for backwards-compatibility. Recommended value is BucketOwnerEnforced."
+  description = "Specifies S3 object ownership control. With the default (and recommended) value of `BucketOwnerEnforced`, ACLs are disabled and log delivery is granted via bucket policy instead of the `log-delivery-write` ACL."
   type        = string
+
+  validation {
+    condition     = contains(["BucketOwnerEnforced", "BucketOwnerPreferred", "ObjectWriter"], var.object_ownership)
+    error_message = "object_ownership must be one of BucketOwnerEnforced, BucketOwnerPreferred, or ObjectWriter."
+  }
 }
 
 variable "tags" {

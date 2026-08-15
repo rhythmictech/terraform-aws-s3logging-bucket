@@ -8,15 +8,17 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       - name: Install prerequisites
         run: ./bin/install-ubuntu.sh
       - name: initialize Terraform
         run: terraform init --backend=false
+      - name: Install pre-commit
+        run: pip install pre-commit
       - name: pre-commit
-        uses: pre-commit/action@v2.0.3
+        run: pre-commit run --show-diff-on-failure --color=always --all-files
         env:
           AWS_DEFAULT_REGION: us-east-1
           # many of these are covered by better reviewdog linters below
@@ -28,29 +30,28 @@ jobs:
   tflint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install prerequisites
         run: ./bin/install-ubuntu.sh
       - name: Terraform init
         run: terraform init --backend=false
       - name: tflint
-        uses: reviewdog/action-tflint@master
+        uses: reviewdog/action-tflint@54a5e5aed57dcfbb4662ec548de876df33d6288d # v1.25.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-check
           filter_mode: added
-          flags: --module
           level: error
   tfsec:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install prerequisites
         run: ./bin/install-ubuntu.sh
       - name: Terraform init
         run: terraform init --backend=false
       - name: tfsec
-        uses: reviewdog/action-tfsec@master
+        uses: reviewdog/action-tfsec@a2f2edbf61c6bb22849de705d304b9d2af5f69cd # v1.30.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-check
@@ -59,9 +60,9 @@ jobs:
   misspell:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: misspell
-        uses: reviewdog/action-misspell@v1
+        uses: reviewdog/action-misspell@d6429416b12b09b4e2768307d53bef58d172e962 # v1.27.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           locale: "US"
@@ -71,9 +72,9 @@ jobs:
   yamllint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: yamllint
-        uses: reviewdog/action-yamllint@v1
+        uses: reviewdog/action-yamllint@de68272fdca5f2a961fb309e0d2e13c2eb186d9e # v1.23.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-check

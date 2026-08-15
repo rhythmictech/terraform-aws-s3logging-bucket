@@ -11,7 +11,7 @@ locals {
     "${local.account_id}-${local.region}-s3logging-${var.bucket_suffix}"
   )
 
-  region = data.aws_region.current.name
+  region = data.aws_region.current.region
 }
 
 # Ignore logging requirement - access logging for a logging bucket is a little meta
@@ -26,6 +26,9 @@ resource "aws_s3_bucket_acl" "this" {
 
   bucket = aws_s3_bucket.this.id
   acl    = "log-delivery-write"
+
+  # ACLs can only be applied once ownership controls permit them
+  depends_on = [aws_s3_bucket_ownership_controls.this]
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "this" {
@@ -43,11 +46,11 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
       status = rule.value.enabled ? "Enabled" : "Disabled"
 
       filter {
-        prefix = try(rule.value.prefix, null)
+        prefix = rule.value.prefix
       }
 
       dynamic "expiration" {
-        for_each = rule.value.expiration != null ? [1] : [0]
+        for_each = rule.value.expiration != null ? [1] : []
 
         content {
           days = rule.value.expiration
@@ -93,7 +96,7 @@ resource "aws_s3_bucket_ownership_controls" "this" {
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
-  bucket = aws_s3_bucket.this.bucket
+  bucket = aws_s3_bucket.this.id
 
   rule {
     apply_server_side_encryption_by_default {
@@ -118,27 +121,23 @@ resource "aws_s3_bucket_policy" "this" {
 
   bucket = aws_s3_bucket.this.id
 
-  policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "S3ServerAccessLogsPolicy",
-            "Effect": "Allow",
-            "Principal": {
-                "Service": "logging.s3.amazonaws.com"
-            },
-            "Action": [
-                "s3:PutObject"
-            ],
-            "Resource": "arn:aws:s3:::${aws_s3_bucket.this.bucket}/*",
-            "Condition": {
-                "StringEquals": {
-                    "aws:SourceAccount": "${local.account_id}"
-                }
-            }
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "S3ServerAccessLogsPolicy"
+        Effect = "Allow"
+        Principal = {
+          Service = "logging.s3.amazonaws.com"
         }
+        Action   = "s3:PutObject"
+        Resource = "${aws_s3_bucket.this.arn}/*"
+        Condition = {
+          StringEquals = {
+            "aws:SourceAccount" = local.account_id
+          }
+        }
+      }
     ]
-}
-EOF
+  })
 }
