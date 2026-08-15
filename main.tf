@@ -11,7 +11,9 @@ locals {
     "${local.account_id}-${local.region}-s3logging-${var.bucket_suffix}"
   )
 
-  region = data.aws_region.current.region
+  # `name` is deprecated in provider v6 but its replacement (`region`) only
+  # exists in v6, and this module supports both major versions
+  region = data.aws_region.current.name
 }
 
 # Ignore logging requirement - access logging for a logging bucket is a little meta
