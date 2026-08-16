@@ -11,7 +11,9 @@ locals {
     "${local.account_id}-${local.region}-s3logging-${var.bucket_suffix}"
   )
 
-  region = data.aws_region.current.region
+  # `name` is deprecated in provider v6 but its replacement (`region`) only
+  # exists in v6, and this module supports both major versions
+  region = data.aws_region.current.name
 }
 
 # Ignore logging requirement - access logging for a logging bucket is a little meta
@@ -29,6 +31,22 @@ resource "aws_s3_bucket_acl" "this" {
 
   # ACLs can only be applied once ownership controls permit them
   depends_on = [aws_s3_bucket_ownership_controls.this]
+}
+
+# Migration aid for existing buckets moving to BucketOwnerEnforced: AWS
+# requires the bucket ACL be reset to private *before* ownership controls can
+# disable ACLs. The reset must happen while ACLs are still enabled, so this
+# is opt-in and must not be used on buckets that are already BucketOwnerEnforced.
+# See https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-ownership-migrating-acls-prerequisites.html
+resource "aws_s3_bucket_acl" "reset" {
+  count = var.object_ownership == "BucketOwnerEnforced" && var.reset_bucket_acl ? 1 : 0
+
+  bucket = aws_s3_bucket.this.id
+  acl    = "private"
+
+  # per AWS docs, the log delivery grant should move to the bucket policy
+  # before the ACL granting it is reset
+  depends_on = [aws_s3_bucket_policy.this]
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "this" {
@@ -93,6 +111,9 @@ resource "aws_s3_bucket_ownership_controls" "this" {
   rule {
     object_ownership = var.object_ownership
   }
+
+  # ordering matters when migrating an ACL'd bucket to BucketOwnerEnforced
+  depends_on = [aws_s3_bucket_acl.reset]
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "this" {

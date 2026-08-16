@@ -68,6 +68,12 @@ variable "object_ownership" {
   }
 }
 
+variable "reset_bucket_acl" {
+  default     = false
+  description = "Set to true when migrating an existing bucket that has ACLs applied (e.g. `log-delivery-write` from an earlier module version) to `object_ownership = \"BucketOwnerEnforced\"`. Resets the bucket ACL to `private` before ownership controls disable ACLs, as AWS requires. Leave false for new buckets — ACL requests fail on buckets that are already BucketOwnerEnforced."
+  type        = bool
+}
+
 variable "tags" {
   default     = {}
   description = "Tags to add to supported resources"
