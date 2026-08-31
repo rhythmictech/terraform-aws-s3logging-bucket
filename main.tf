@@ -11,9 +11,7 @@ locals {
     "${local.account_id}-${local.region}-s3logging-${var.bucket_suffix}"
   )
 
-  # `name` is deprecated in provider v6 but its replacement (`region`) only
-  # exists in v6, and this module supports both major versions
-  region = data.aws_region.current.name
+  region = data.aws_region.current.region
 }
 
 # Ignore logging requirement - access logging for a logging bucket is a little meta
@@ -120,6 +118,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
   bucket = aws_s3_bucket.this.id
 
   rule {
+    blocked_encryption_types = var.blocked_encryption_types
+
     apply_server_side_encryption_by_default {
       kms_master_key_id = var.kms_key_id
       sse_algorithm     = var.kms_key_id != null ? "aws:kms" : "AES256"
